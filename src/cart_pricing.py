@@ -36,13 +36,12 @@ def calculate_subtotal(items: List[Dict[str, Any]]) -> float:
     return round(subtotal, 2)
 
 
-def calculate_tier_discount(subtotal: float, tier: str, is_discountable:bool, category:str) -> float:
+def calculate_tier_discount(subtotal: float, tier: str) -> float:
     """
     Calculate the membership discount amount for a given subtotal and tier.
     """
     normalized_tier = tier.lower() if tier else "standard"
-    if is_discountable == True and category != 'gift_card':
-        discount_rate = TIER_DISCOUNT_RATES.get(normalized_tier, 0.00)
+    discount_rate = TIER_DISCOUNT_RATES.get(normalized_tier, 0.00)
     return round(subtotal * discount_rate, 2)
 
 
@@ -115,12 +114,16 @@ def calculate_order_summary(cart: Dict[str, Any]) -> Dict[str, Any]:
     # Step 1: Gross Subtotal
     subtotal = calculate_subtotal(items)
 
-    l = 0
+    # Step 2: Calculate discount amount
+    promo_amount = 0
     for item in items:
-        if (item['is_discountable'] == True or item['is_discountable'] == None) and (item['category'] != 'gift_card' or not item['category']):
-            sub = item['price'] * item['quantity']
-            l = calculate_tier_discount(sub, tier, item['is_discountable'], item['category']) 
-    discount_amount = l 
+        price = item.get('price', 0.0)
+        qty = item.get('quantity', 0.0)
+        if item.get('is_discountable', True) and item.get('category', '').lower() != 'gift_card':
+            promo_amount += price*qty
+    discount_amount = calculate_tier_discount(promo_amount, tier)
+   
+        
 
     # Step 3: Discounted Subtotal
     discounted_subtotal = round(max(0.0, subtotal - discount_amount), 2)
@@ -143,3 +146,20 @@ def calculate_order_summary(cart: Dict[str, Any]) -> Dict[str, Any]:
         "total": total,
         "item_count": sum(item.get("quantity", 0) for item in items)
     }
+    
+if __name__ == "__main__":
+    cart = {
+        "customer": {"tier": "gold"},
+        "items": [
+            {
+                "id": "SKU-001",
+                "name": "Wireless Mouse",
+                "price": 30.00,
+                "quantity": 2,
+                "category": "electronics",
+                "is_discountable": True
+            }
+        ]
+    }
+    summary = calculate_order_summary(cart=cart)
+    print(summary)
