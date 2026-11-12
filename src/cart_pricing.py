@@ -114,14 +114,14 @@ def calculate_order_summary(cart: Dict[str, Any]) -> Dict[str, Any]:
     # Step 1: Gross Subtotal
     subtotal = calculate_subtotal(items)
 
-    # Step 2: Calculate discount amount
-    promo_amount = 0
+    # Step 2: Calculate discount amount for eligible customers
+    eligibile_total = 0
     for item in items:
         price = item.get('price', 0.0)
         qty = item.get('quantity', 0.0)
         if item.get('is_discountable', True) and item.get('category', '').lower() != 'gift_card':
-            promo_amount += price*qty
-    discount_amount = calculate_tier_discount(promo_amount, tier)
+            eligibile_total += price*qty
+    discount_amount = calculate_tier_discount(eligibile_total, tier)
    
         
 
@@ -146,20 +146,3 @@ def calculate_order_summary(cart: Dict[str, Any]) -> Dict[str, Any]:
         "total": total,
         "item_count": sum(item.get("quantity", 0) for item in items)
     }
-    
-if __name__ == "__main__":
-    cart = {
-        "customer": {"tier": "gold"},
-        "items": [
-            {
-                "id": "SKU-001",
-                "name": "Wireless Mouse",
-                "price": 30.00,
-                "quantity": 2,
-                "category": "electronics",
-                "is_discountable": True
-            }
-        ]
-    }
-    summary = calculate_order_summary(cart=cart)
-    print(summary)
